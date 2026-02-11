@@ -33,27 +33,17 @@ export default function OnboardingPage() {
           <button
             key={section.id}
             onClick={() => setActiveTab(index)}
-            className={`px-4 py-2 rounded-t text-sm font-medium
-              ${
-                activeTab === index
-                  ? "bg-black text-white"
-                  : "bg-gray-100 hover:bg-gray-200"
-              }`}
+            className={`px-4 py-2 rounded-t text-sm font-medium ${
+              activeTab === index
+                ? "bg-black text-white"
+                : "bg-gray-100 hover:bg-gray-200"
+            }`}
           >
             {section.title}
           </button>
         ))}
-            className={`px-4 py-2 rounded-t text-sm font-medium
-              ${
-                activeTab === tab
-                  ? "bg-black text-white"
-                  : "bg-gray-100 hover:bg-gray-200"
-              }`}
-          >
-            {tab}
-          </button>
-        ))}
       </div>
+
 
       {/* Content */}
       <div className="bg-white border rounded-lg p-6 space-y-4">
