@@ -5,6 +5,17 @@ import { onboardingData } from "@/data/onboarding";
 import { discoveryCall } from "@/data/discoveryCall";
 import { compareData } from "@/lib/comparison";
 
+  const STAGES = [
+  "Lead",
+  "Discovery",
+  "Risk Review",
+  "Agreement Sent",
+  "Signed",
+  "Closed Won"
+] as const;
+
+type Stage = typeof STAGES[number];
+
 export default function CRMPage() {
   const initialResult = compareData(onboardingData, discoveryCall);
 
@@ -12,6 +23,9 @@ export default function CRMPage() {
   const [discrepancies, setDiscrepancies] = useState(
     initialResult.discrepancies
   );
+
+const [stage, setStage] = useState<Stage>("Discovery");
+
 
   const resolveTask = (taskId: string) => {
     const updatedTasks = tasks.filter((task) => task.id !== taskId);
@@ -46,6 +60,28 @@ export default function CRMPage() {
     // --- Deal Gating Logic ---
     const canProceed = riskLevel !== "High";
 
+  const currentStageIndex = STAGES.indexOf(stage);
+
+const moveForward = () => {
+  if (currentStageIndex === STAGES.length - 1) return;
+
+  const nextStage = STAGES[currentStageIndex + 1];
+
+  // Gate Agreement Sent if risk is High
+  if (nextStage === "Agreement Sent" && riskLevel === "High") {
+    alert("Cannot send agreement while deal is High Risk.");
+    return;
+  }
+
+  setStage(nextStage);
+};
+
+const moveBackward = () => {
+  if (currentStageIndex === 0) return;
+  setStage(STAGES[currentStageIndex - 1]);
+};
+
+
 return (
   <div className="min-h-screen bg-zinc-950 text-zinc-100 p-10">
     <div className="max-w-6xl mx-auto space-y-10">
@@ -70,6 +106,45 @@ return (
           </p>
         </div>
       </div>
+
+      {/* Pipeline */}
+<section className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+  <h2 className="text-sm uppercase tracking-wider text-zinc-500 mb-4">
+    Pipeline Stage
+  </h2>
+
+  <div className="flex items-center justify-between">
+    {STAGES.map((s, index) => (
+      <div
+        key={s}
+        className={`text-xs px-3 py-1 rounded-full border ${
+          index <= currentStageIndex
+            ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+            : "bg-zinc-800 text-zinc-500 border-zinc-700"
+        }`}
+      >
+        {s}
+      </div>
+    ))}
+  </div>
+
+  <div className="flex gap-3 mt-6">
+    <button
+      onClick={moveBackward}
+      className="px-3 py-1 text-xs bg-zinc-800 rounded hover:bg-zinc-700 transition"
+    >
+      Back
+    </button>
+
+    <button
+      onClick={moveForward}
+      className="px-3 py-1 text-xs bg-zinc-800 rounded hover:bg-zinc-700 transition"
+    >
+      Next
+    </button>
+  </div>
+</section>
+
 
       {/* Risk Overview */}
       <section className="grid grid-cols-3 gap-6">
