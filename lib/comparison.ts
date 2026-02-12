@@ -26,13 +26,13 @@ const severityWeights = {
   high: 5,
 };
 
-function calculateRiskScore(discrepancies: Discrepancy[]) {
+export function calculateRiskScore(discrepancies: Discrepancy[]) {
   return discrepancies.reduce((total, d) => {
     return total + severityWeights[d.severity];
   }, 0);
 }
 
-function classifyRisk(score: number) {
+export function classifyRisk(score: number) {
   if (score === 0) return "Aligned";
   if (score <= 3) return "Low";
   if (score <= 6) return "Moderate";
