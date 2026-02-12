@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { onboardingData } from "@/data/onboarding";
 import { discoveryCall } from "@/data/discoveryCall";
-import { compareData } from "@/lib/comparison";
+import { compareData, calculateRiskScore, classifyRisk } from "@/lib/comparison";
 
   const STAGES = [
   "Lead",
@@ -38,27 +38,11 @@ const [stage, setStage] = useState<Stage>("Discovery");
     setDiscrepancies(updatedDiscrepancies);
   };
 
-  // --- Risk Calculation (Derived from Current State) ---
+// --- Risk Calculation (Shared Engine) ---
+const riskScore = calculateRiskScore(discrepancies);
+const riskLevel = classifyRisk(riskScore);
+const canProceed = riskLevel !== "High";
 
-    const severityWeights = {
-    low: 1,
-    medium: 3,
-    high: 5,
-    };
-
-    const riskScore = discrepancies.reduce((total, d) => {
-    return total + severityWeights[d.severity];
-    }, 0);
-
-    let riskLevel: "Aligned" | "Low" | "Moderate" | "High";
-
-    if (riskScore === 0) riskLevel = "Aligned";
-    else if (riskScore <= 3) riskLevel = "Low";
-    else if (riskScore <= 6) riskLevel = "Moderate";
-    else riskLevel = "High";
-
-    // --- Deal Gating Logic ---
-    const canProceed = riskLevel !== "High";
 
   const currentStageIndex = STAGES.indexOf(stage);
 
