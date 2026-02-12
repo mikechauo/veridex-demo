@@ -46,110 +46,167 @@ export default function CRMPage() {
     // --- Deal Gating Logic ---
     const canProceed = riskLevel !== "High";
 
-  return (
-    <div className="p-10 max-w-5xl mx-auto space-y-8">
-      <h1 className="text-3xl font-bold">
-        Veridex CRM — Deal Intelligence
-      </h1>
+return (
+  <div className="min-h-screen bg-zinc-950 text-zinc-100 p-10">
+    <div className="max-w-6xl mx-auto space-y-10">
 
-      {/* Risk Summary */}
-        <section className="border rounded-lg p-6 space-y-2">
-        <h2 className="text-xl font-semibold">Risk Summary</h2>
-        <p><strong>Risk Score:</strong> {riskScore}</p>
-        <p><strong>Risk Level:</strong> {riskLevel}</p>
-        </section>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Veridex CRM
+          </h1>
+          <p className="text-sm text-zinc-400">
+            Deal Intelligence Dashboard
+          </p>
+        </div>
 
+        <div className="text-right">
+          <p className="text-xs text-zinc-500 uppercase tracking-wider">
+            Risk Score
+          </p>
+          <p className="text-2xl font-semibold">
+            {riskScore}
+          </p>
+        </div>
+      </div>
+
+      {/* Risk Overview */}
+      <section className="grid grid-cols-3 gap-6">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+          <p className="text-xs text-zinc-500 uppercase tracking-wider">
+            Risk Level
+          </p>
+          <p
+            className={`mt-2 text-lg font-semibold ${
+              riskLevel === "High"
+                ? "text-red-500"
+                : riskLevel === "Moderate"
+                ? "text-amber-400"
+                : riskLevel === "Low"
+                ? "text-emerald-400"
+                : "text-emerald-500"
+            }`}
+          >
+            {riskLevel}
+          </p>
+        </div>
+
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+          <p className="text-xs text-zinc-500 uppercase tracking-wider">
+            Open Discrepancies
+          </p>
+          <p className="mt-2 text-lg font-semibold">
+            {discrepancies.length}
+          </p>
+        </div>
+
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+          <p className="text-xs text-zinc-500 uppercase tracking-wider">
+            Deal Status
+          </p>
+          <p
+            className={`mt-2 text-lg font-semibold ${
+              canProceed
+                ? "text-emerald-400"
+                : "text-red-500"
+            }`}
+          >
+            {canProceed ? "Eligible" : "Blocked"}
+          </p>
+        </div>
+      </section>
 
       {/* Discrepancies */}
-      <section className="border rounded-lg p-6 space-y-4">
-        <h2 className="text-xl font-semibold">
-          Detected Discrepancies
+      <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 space-y-4">
+        <h2 className="text-sm uppercase tracking-wider text-zinc-500">
+          Discrepancies
         </h2>
 
         {discrepancies.length === 0 ? (
-          <p className="text-green-600">
+          <p className="text-emerald-400 text-sm">
             No mismatches detected.
           </p>
         ) : (
           discrepancies.map((d) => (
             <div
               key={d.id}
-              className="bg-red-50 border border-red-200 p-4 rounded"
+              className="border border-zinc-800 bg-zinc-950 rounded-lg p-4"
             >
-              <p><strong>{d.category}</strong></p>
-              <p>Expected: {d.expected}</p>
-              <p>Actual: {d.actual}</p>
+              <p className="font-medium">{d.category}</p>
+              <p className="text-sm text-zinc-400">
+                Expected: {d.expected}
+              </p>
+              <p className="text-sm text-zinc-400">
+                Actual: {d.actual}
+              </p>
             </div>
           ))
         )}
       </section>
 
       {/* Tasks */}
-      <section className="border rounded-lg p-6 space-y-4">
-        <h2 className="text-xl font-semibold">
-          Auto-Generated Tasks
+      <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 space-y-4">
+        <h2 className="text-sm uppercase tracking-wider text-zinc-500">
+          Open Tasks
         </h2>
 
         {tasks.length === 0 ? (
-          <p className="text-green-600">
+          <p className="text-emerald-400 text-sm">
             No tasks required.
           </p>
         ) : (
           tasks.map((task) => (
             <div
               key={task.id}
-              className="bg-yellow-50 border border-yellow-200 p-4 rounded space-y-2"
+              className="border border-zinc-800 bg-zinc-950 rounded-lg p-4 flex justify-between items-center"
             >
-              <p><strong>Owner:</strong> {task.owner}</p>
-              <p><strong>Action:</strong> {task.action}</p>
-              <p><strong>Priority:</strong> {task.priority}</p>
+              <div>
+                <p className="font-medium">{task.action}</p>
+                <p className="text-xs text-zinc-400">
+                  Owner: {task.owner} • Priority: {task.priority}
+                </p>
+              </div>
 
               <button
                 onClick={() => resolveTask(task.id)}
-                className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                className="text-xs px-3 py-1 rounded bg-zinc-800 hover:bg-zinc-700 transition"
               >
-                Mark Resolved
+                Resolve
               </button>
             </div>
           ))
         )}
       </section>
 
-      
-    {/* Deal Finalization */}
-    <section className="border rounded-lg p-6 space-y-4">
-    <h2 className="text-xl font-semibold">
-        Deal Finalization
-    </h2>
+      {/* Deal Finalization */}
+      <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 space-y-4">
+        <h2 className="text-sm uppercase tracking-wider text-zinc-500">
+          Deal Finalization
+        </h2>
 
-    {canProceed ? (
-        <div className="space-y-2">
-        <p className="text-green-600 font-medium">
-            Deal eligible for approval.
-        </p>
-        <button className="bg-green-600 text-white px-4 py-2 rounded">
+        {canProceed ? (
+          <button className="bg-emerald-500 hover:bg-emerald-600 transition px-4 py-2 rounded text-sm font-medium">
             Finalize Deal
-        </button>
-        </div>
-    ) : (
-        <div className="space-y-2">
-        <p className="text-red-600 font-medium">
-            🚫 Deal blocked due to high risk discrepancies.
-        </p>
-        <p className="text-sm text-gray-600">
-            Resolve high-severity conflicts before proceeding.
-        </p>
-        <button
-            disabled
-            className="bg-gray-400 text-white px-4 py-2 rounded cursor-not-allowed"
-        >
-            Finalize Deal
-        </button>
-        </div>
-    )}
-    </section>
-
+          </button>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-red-500 text-sm">
+              High-risk discrepancies must be resolved.
+            </p>
+            <button
+              disabled
+              className="bg-zinc-800 text-zinc-500 px-4 py-2 rounded text-sm cursor-not-allowed"
+            >
+              Finalize Deal
+            </button>
+          </div>
+        )}
+      </section>
 
     </div>
+  </div>
+);
+
   );
 }
