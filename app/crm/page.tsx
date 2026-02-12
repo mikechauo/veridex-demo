@@ -252,6 +252,35 @@ export default function CRMPage() {
             ))
           )}
         </Section>
+                {/* Deal Finalization */}
+        <Section title="Deal Finalization">
+          {canProceed ? (
+            <button
+              onClick={() =>
+                setDeal((prev) => ({
+                  ...prev,
+                  stage: "Closed Won",
+                }))
+              }
+              className="bg-emerald-500 hover:bg-emerald-600 transition px-4 py-2 rounded text-sm font-medium"
+            >
+              Finalize Deal
+            </button>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-red-500 text-sm">
+                High-risk discrepancies must be resolved before closing.
+              </p>
+              <button
+                disabled
+                className="bg-zinc-800 text-zinc-500 px-4 py-2 rounded text-sm cursor-not-allowed"
+              >
+                Finalize Deal
+              </button>
+            </div>
+          )}
+        </Section>
+
       </div>
     </div>
   );
