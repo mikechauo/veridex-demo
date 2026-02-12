@@ -43,6 +43,8 @@ export default function CRMPage() {
     else if (riskScore <= 6) riskLevel = "Moderate";
     else riskLevel = "High";
 
+    // --- Deal Gating Logic ---
+    const canProceed = riskLevel !== "High";
 
   return (
     <div className="p-10 max-w-5xl mx-auto space-y-8">
@@ -112,6 +114,40 @@ export default function CRMPage() {
           ))
         )}
       </section>
+
+      
+    {/* Deal Finalization */}
+    <section className="border rounded-lg p-6 space-y-4">
+    <h2 className="text-xl font-semibold">
+        Deal Finalization
+    </h2>
+
+    {canProceed ? (
+        <div className="space-y-2">
+        <p className="text-green-600 font-medium">
+            Deal eligible for approval.
+        </p>
+        <button className="bg-green-600 text-white px-4 py-2 rounded">
+            Finalize Deal
+        </button>
+        </div>
+    ) : (
+        <div className="space-y-2">
+        <p className="text-red-600 font-medium">
+            🚫 Deal blocked due to high risk discrepancies.
+        </p>
+        <p className="text-sm text-gray-600">
+            Resolve high-severity conflicts before proceeding.
+        </p>
+        <button
+            disabled
+            className="bg-gray-400 text-white px-4 py-2 rounded cursor-not-allowed"
+        >
+            Finalize Deal
+        </button>
+        </div>
+    )}
+    </section>
 
 
     </div>
