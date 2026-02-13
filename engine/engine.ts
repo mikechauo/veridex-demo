@@ -46,6 +46,34 @@ function runRules(deal: Deal): Deal {
   return updatedDeal;
 }
 
+function ensureConflictTask(
+  deal: Deal,
+  key: string,
+  title: string
+) {
+  const existing = deal.tasks.find((t) => t.key === key);
+
+  if (!existing) {
+    deal.tasks.push({
+      id: crypto.randomUUID(),
+      key,
+      title,
+      resolved: false,
+      type: "Conflict",
+      source: "system"
+    });
+
+    deal.riskScore += 20;
+
+    deal.events.push({
+      type: "CONFLICT_DETECTED",
+      dealId: deal.id,
+      payload: { conflict: title },
+      timestamp: new Date().toISOString()
+    });
+  }
+}
+
 function applyAction(
   deal: Deal,
   action: Action,
@@ -57,23 +85,30 @@ function applyAction(
     case "DETECT_CONFLICTS":
       const conflicts = detectConflicts(updatedDeal);
 
-      conflicts.forEach((conflict) => {
-        updatedDeal.tasks.push({
-          id: crypto.randomUUID(),
-          title: conflict,
-          resolved: false,
-          type: "Conflict"
-        });
+      const revenueMismatch = conflicts.includes(
+        "Revenue mismatch between systems"
+      );
 
-        updatedDeal.riskScore += 20;
+      const legalMismatch = conflicts.includes(
+        "Legal entity mismatch between systems"
+      );
 
-        updatedDeal.events.push({
-          type: "CONFLICT_DETECTED",
-          dealId: deal.id,
-          payload: { conflict },
-          timestamp: new Date().toISOString()
-        });
-      });
+      if (revenueMismatch) {
+        ensureConflictTask(
+          updatedDeal,
+          "revenue-mismatch",
+          "Revenue mismatch between systems"
+        );
+      }
+
+      if (legalMismatch) {
+        ensureConflictTask(
+          updatedDeal,
+          "legal-mismatch",
+          "Legal entity mismatch between systems"
+        );
+      }
+
       break;
 
     case "MOVE_STAGE":

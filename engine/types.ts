@@ -1,5 +1,3 @@
-// engine/types.ts
-
 export type DealStage =
   | "Discovery"
   | "Risk Review"
@@ -40,10 +38,12 @@ export type TaskType =
 
 export type Task = {
   id: string;
+  key?: string; // 🔥 stable identifier for idempotency
   title: string;
   resolved: boolean;
   type?: TaskType;
   owner?: Role;
+  source?: "system" | "manual"; // 🔥 identify system-generated tasks
 };
 
 export type IntelligenceScores = {
