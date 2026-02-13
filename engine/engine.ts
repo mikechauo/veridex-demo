@@ -1,14 +1,15 @@
 // engine/engine.ts
 import { Deal, DealEvent } from "./types";
+import { rules } from "./rules";
+import { Action } from "./actions";
 
 export function processEvent(deal: Deal, event: DealEvent): Deal {
-  const updatedDeal = { ...deal };
+  let updatedDeal = { ...deal };
 
-  // Log event
+  // Log incoming event
   updatedDeal.events = [...updatedDeal.events, event];
 
-  // === EVENT ROUTING ===
-
+  // === MUTATE BASED ON EVENT ===
   switch (event.type) {
     case "CRM_UPDATED":
       updatedDeal.riskScore = calculateRisk(updatedDeal);
@@ -20,14 +21,54 @@ export function processEvent(deal: Deal, event: DealEvent): Deal {
           ? { ...task, resolved: true }
           : task
       );
+      updatedDeal.riskScore = calculateRisk(updatedDeal);
       break;
   }
 
-  // After any mutation → re-evaluate intelligence
+  // Recalculate intelligence
   updatedDeal.intelligence = calculateIntelligence(updatedDeal);
 
-  // Auto stage movement logic
-  updatedDeal.stage = evaluateStage(updatedDeal);
+  // === RULE ENGINE EXECUTION LOOP ===
+  updatedDeal = runRules(updatedDeal);
+
+  return updatedDeal;
+}
+
+function runRules(deal: Deal): Deal {
+  let updatedDeal = { ...deal };
+
+  for (const rule of rules) {
+    const action = rule.evaluate(updatedDeal);
+    if (action) {
+      updatedDeal = applyAction(updatedDeal, action, rule.name);
+    }
+  }
+
+  return updatedDeal;
+}
+
+function applyAction(
+  deal: Deal,
+  action: Action,
+  ruleName: string
+): Deal {
+  let updatedDeal = { ...deal };
+
+  switch (action.type) {
+    case "MOVE_STAGE":
+      updatedDeal.stage = action.to;
+
+      updatedDeal.events = [
+        ...updatedDeal.events,
+        {
+          type: "STAGE_AUTO_MOVED",
+          dealId: deal.id,
+          payload: { to: action.to, rule: ruleName },
+          timestamp: new Date().toISOString()
+        }
+      ];
+      break;
+  }
 
   return updatedDeal;
 }
@@ -43,19 +84,4 @@ function calculateIntelligence(deal: Deal) {
   const probability = risk > 70 ? 0.8 : risk > 40 ? 0.6 : 0.4;
 
   return { risk, confidence, probability };
-}
-
-function evaluateStage(deal: Deal) {
-  if (deal.riskScore > 70 && deal.stage === "Discovery") {
-    return "Risk Review";
-  }
-
-  if (
-    deal.tasks.every(t => t.resolved) &&
-    deal.stage === "Risk Review"
-  ) {
-    return "Agreement Sent";
-  }
-
-  return deal.stage;
 }
