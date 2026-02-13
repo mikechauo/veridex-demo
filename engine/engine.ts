@@ -28,6 +28,9 @@ export function processEvent(deal: Deal, event: DealEvent): Deal {
 
   updatedDeal = runRules(updatedDeal);
 
+  // 🔥 Risk is now recalculated from state
+  updatedDeal.riskScore = calculateRisk(updatedDeal);
+
   updatedDeal.intelligence = calculateIntelligence(updatedDeal);
 
   return updatedDeal;
@@ -62,8 +65,6 @@ function ensureConflictTask(
       type: "Conflict",
       source: "system"
     });
-
-    deal.riskScore += 20;
 
     deal.events.push({
       type: "CONFLICT_DETECTED",
@@ -159,6 +160,23 @@ function applyAction(
   }
 
   return updatedDeal;
+}
+
+/**
+ * 🔥 Risk is derived from current open conflicts
+ */
+function calculateRisk(deal: Deal): number {
+  const baseRisk = 30;
+
+  const openConflictTasks = deal.tasks.filter(
+    (t) => t.type === "Conflict" && !t.resolved
+  ).length;
+
+  const conflictRisk = openConflictTasks * 20;
+
+  const totalRisk = baseRisk + conflictRisk;
+
+  return Math.min(totalRisk, 100);
 }
 
 function calculateIntelligence(deal: Deal) {
