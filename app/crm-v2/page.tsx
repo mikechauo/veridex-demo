@@ -22,23 +22,27 @@ export default function CRMV2Page() {
     });
   }
 
-  function simulateCRMUpdate() {
+  function simulateCRMConflict() {
     dispatch({
       type: "CRM_UPDATED",
       dealId: deal.id,
-      payload: {},
+      payload: {
+        revenue: 70000,
+        legalEntity: "Acme Holdings LLC"
+      },
       timestamp: new Date().toISOString()
     });
   }
 
   return (
     <div style={{ padding: 40, fontFamily: "sans-serif" }}>
-      <h1>Veridex CRM v2 – Intelligence Engine</h1>
+      <h1>Veridex CRM v2 – Conflict Intelligence</h1>
 
       <hr />
 
-      <h2>Deal: {deal.name}</h2>
+      <h2>{deal.name}</h2>
       <p><strong>Stage:</strong> {deal.stage}</p>
+      <p><strong>Deal Owner:</strong> {deal.owner}</p>
       <p><strong>Risk Score:</strong> {deal.riskScore}</p>
 
       <h3>Intelligence</h3>
@@ -47,12 +51,26 @@ export default function CRMV2Page() {
 
       <hr />
 
+      <h3>Internal Data</h3>
+      <p>Revenue: ${deal.revenue}</p>
+      <p>Legal Entity: {deal.legalEntity}</p>
+
+      <hr />
+
+      <button onClick={simulateCRMConflict}>
+        Simulate CRM Conflict
+      </button>
+
+      <hr />
+
       <h3>Tasks</h3>
-      {deal.tasks.map(task => (
+      {deal.tasks.map((task) => (
         <div key={task.id} style={{ marginBottom: 10 }}>
           <span>
-            {task.title} – {task.resolved ? "✅ Resolved" : "❌ Open"}
+            {task.title} – {task.resolved ? "✅" : "❌"}
+            {task.owner && ` (Owner: ${task.owner})`}
           </span>
+
           {!task.resolved && (
             <button
               style={{ marginLeft: 10 }}
@@ -66,14 +84,7 @@ export default function CRMV2Page() {
 
       <hr />
 
-      <button onClick={simulateCRMUpdate}>
-        Simulate CRM Update
-      </button>
-
-      <hr />
-
       <h3>Event Timeline</h3>
-      {deal.events.length === 0 && <p>No events yet.</p>}
       {deal.events.map((event, i) => (
         <div key={i}>
           <small>

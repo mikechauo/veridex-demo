@@ -9,14 +9,21 @@ export type DealStage =
 
 export type RiskLevel = "Low" | "Medium" | "High";
 
+export type Role =
+  | "Sales"
+  | "Legal"
+  | "Finance"
+  | "Solutions Engineer"
+  | "RevOps";
+
 export type DealEventType =
   | "DEAL_CREATED"
   | "CRM_UPDATED"
   | "TASK_RESOLVED"
-  | "RISK_RECALCULATED"
   | "STAGE_AUTO_MOVED"
   | "TASK_AUTO_ASSIGNED"
-  | "SYNC_RECEIVED";
+  | "DEAL_OWNER_UPDATED"
+  | "CONFLICT_DETECTED";
 
 export type DealEvent = {
   type: DealEventType;
@@ -25,11 +32,18 @@ export type DealEvent = {
   timestamp: string;
 };
 
+export type TaskType =
+  | "Legal"
+  | "Finance"
+  | "Technical"
+  | "Conflict";
+
 export type Task = {
   id: string;
   title: string;
   resolved: boolean;
-  owner?: string;
+  type?: TaskType;
+  owner?: Role;
 };
 
 export type IntelligenceScores = {
@@ -38,12 +52,20 @@ export type IntelligenceScores = {
   probability: number;
 };
 
+export type ExternalCRMData = {
+  revenue: number;
+  legalEntity: string;
+};
+
 export type Deal = {
   id: string;
   name: string;
   stage: DealStage;
-  riskLevel: RiskLevel;
   riskScore: number;
+  owner?: Role;
+  revenue: number;
+  legalEntity: string;
+  externalCRM?: ExternalCRMData;
   tasks: Task[];
   intelligence: IntelligenceScores;
   events: DealEvent[];

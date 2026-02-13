@@ -1,35 +1,34 @@
-// engine/engine.ts
 import { Deal, DealEvent } from "./types";
 import { rules } from "./rules";
 import { Action } from "./actions";
+import {
+  assignTaskOwner,
+  assignDealOwner
+} from "./assignmentEngine";
+import { detectConflicts } from "./conflictEngine";
 
 export function processEvent(deal: Deal, event: DealEvent): Deal {
   let updatedDeal = { ...deal };
 
-  // Log incoming event
   updatedDeal.events = [...updatedDeal.events, event];
 
-  // === MUTATE BASED ON EVENT ===
   switch (event.type) {
     case "CRM_UPDATED":
-      updatedDeal.riskScore = calculateRisk(updatedDeal);
+      updatedDeal.externalCRM = event.payload;
       break;
 
     case "TASK_RESOLVED":
-      updatedDeal.tasks = updatedDeal.tasks.map(task =>
+      updatedDeal.tasks = updatedDeal.tasks.map((task) =>
         task.id === event.payload.taskId
           ? { ...task, resolved: true }
           : task
       );
-      updatedDeal.riskScore = calculateRisk(updatedDeal);
       break;
   }
 
-  // Recalculate intelligence
-  updatedDeal.intelligence = calculateIntelligence(updatedDeal);
-
-  // === RULE ENGINE EXECUTION LOOP ===
   updatedDeal = runRules(updatedDeal);
+
+  updatedDeal.intelligence = calculateIntelligence(updatedDeal);
 
   return updatedDeal;
 }
@@ -55,33 +54,83 @@ function applyAction(
   let updatedDeal = { ...deal };
 
   switch (action.type) {
-    case "MOVE_STAGE":
-      updatedDeal.stage = action.to;
+    case "DETECT_CONFLICTS":
+      const conflicts = detectConflicts(updatedDeal);
 
-      updatedDeal.events = [
-        ...updatedDeal.events,
-        {
+      conflicts.forEach((conflict) => {
+        updatedDeal.tasks.push({
+          id: crypto.randomUUID(),
+          title: conflict,
+          resolved: false,
+          type: "Conflict"
+        });
+
+        updatedDeal.riskScore += 20;
+
+        updatedDeal.events.push({
+          type: "CONFLICT_DETECTED",
+          dealId: deal.id,
+          payload: { conflict },
+          timestamp: new Date().toISOString()
+        });
+      });
+      break;
+
+    case "MOVE_STAGE":
+      if (updatedDeal.stage !== action.to) {
+        updatedDeal.stage = action.to;
+
+        updatedDeal.events.push({
           type: "STAGE_AUTO_MOVED",
           dealId: deal.id,
           payload: { to: action.to, rule: ruleName },
           timestamp: new Date().toISOString()
-        }
-      ];
+        });
+      }
+      break;
+
+    case "ASSIGN_TASK_OWNER":
+      updatedDeal.tasks = updatedDeal.tasks.map((task) =>
+        task.id === action.taskId
+          ? {
+              ...task,
+              owner: assignTaskOwner(task)
+            }
+          : task
+      );
+
+      updatedDeal.events.push({
+        type: "TASK_AUTO_ASSIGNED",
+        dealId: deal.id,
+        payload: { taskId: action.taskId },
+        timestamp: new Date().toISOString()
+      });
+      break;
+
+    case "ASSIGN_DEAL_OWNER":
+      const newOwner = assignDealOwner(updatedDeal);
+
+      if (newOwner !== updatedDeal.owner) {
+        updatedDeal.owner = newOwner;
+
+        updatedDeal.events.push({
+          type: "DEAL_OWNER_UPDATED",
+          dealId: deal.id,
+          payload: { owner: newOwner },
+          timestamp: new Date().toISOString()
+        });
+      }
       break;
   }
 
   return updatedDeal;
 }
 
-function calculateRisk(deal: Deal): number {
-  const unresolved = deal.tasks.filter(t => !t.resolved).length;
-  return Math.max(0, 100 - unresolved * 20);
-}
-
 function calculateIntelligence(deal: Deal) {
   const risk = deal.riskScore;
-  const confidence = 100 - risk;
-  const probability = risk > 70 ? 0.8 : risk > 40 ? 0.6 : 0.4;
+  const confidence = Math.max(0, 100 - risk);
+  const probability =
+    risk > 70 ? 0.3 : risk > 40 ? 0.6 : 0.85;
 
   return { risk, confidence, probability };
 }
