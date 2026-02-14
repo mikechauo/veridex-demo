@@ -38,12 +38,12 @@ export type TaskType =
 
 export type Task = {
   id: string;
-  key?: string; // 🔥 stable identifier for idempotency
+  key?: string;
   title: string;
   resolved: boolean;
   type?: TaskType;
   owner?: Role;
-  source?: "system" | "manual"; // 🔥 identify system-generated tasks
+  source?: "system" | "manual";
 };
 
 export type IntelligenceScores = {
@@ -55,6 +55,8 @@ export type IntelligenceScores = {
 export type ExternalCRMData = {
   revenue: number;
   legalEntity: string;
+  stage: DealStage;
+  owner?: Role;
 };
 
 export type Deal = {

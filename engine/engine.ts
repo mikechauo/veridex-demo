@@ -15,6 +15,33 @@ export function processEvent(deal: Deal, event: DealEvent): Deal {
   switch (event.type) {
     case "CRM_UPDATED":
       updatedDeal.externalCRM = event.payload;
+
+      // 🔥 Sync workflow state only (not data fields)
+      if (event.payload.stage && event.payload.stage !== updatedDeal.stage) {
+        updatedDeal.stage = event.payload.stage;
+
+        updatedDeal.events.push({
+          type: "STAGE_AUTO_MOVED",
+          dealId: updatedDeal.id,
+          payload: { to: event.payload.stage, source: "CRM_SYNC" },
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      if (
+        event.payload.owner &&
+        event.payload.owner !== updatedDeal.owner
+      ) {
+        updatedDeal.owner = event.payload.owner;
+
+        updatedDeal.events.push({
+          type: "DEAL_OWNER_UPDATED",
+          dealId: updatedDeal.id,
+          payload: { owner: event.payload.owner, source: "CRM_SYNC" },
+          timestamp: new Date().toISOString()
+        });
+      }
+
       break;
 
     case "TASK_RESOLVED":
@@ -26,11 +53,17 @@ export function processEvent(deal: Deal, event: DealEvent): Deal {
       break;
   }
 
-  updatedDeal = runRules(updatedDeal);
-
-  // 🔥 Risk is now recalculated from state
+  /**
+   * 🔥 IMPORTANT FIX:
+   * Risk must be calculated BEFORE rules run,
+   * because owner assignment depends on riskScore.
+   */
   updatedDeal.riskScore = calculateRisk(updatedDeal);
 
+  // Now rules run with correct riskScore
+  updatedDeal = runRules(updatedDeal);
+
+  // Intelligence runs after everything
   updatedDeal.intelligence = calculateIntelligence(updatedDeal);
 
   return updatedDeal;
@@ -163,7 +196,7 @@ function applyAction(
 }
 
 /**
- * 🔥 Risk is derived from current open conflicts
+ * 🔥 Risk derived from open conflicts
  */
 function calculateRisk(deal: Deal): number {
   const baseRisk = 30;
@@ -183,7 +216,7 @@ function calculateIntelligence(deal: Deal) {
   const risk = deal.riskScore;
   const confidence = Math.max(0, 100 - risk);
   const probability =
-    risk > 70 ? 0.3 : risk > 40 ? 0.6 : 0.85;
+    risk >= 70 ? 0.3 : risk > 40 ? 0.6 : 0.85;
 
   return { risk, confidence, probability };
 }
